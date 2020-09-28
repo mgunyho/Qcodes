@@ -209,3 +209,21 @@ class TestSetContextManager(TestCase):
             assert self.instrument.a() == 3
 
         assert self.instrument.a.get() == 2
+
+    def test_context_with_no_value(self):
+        self.instrument.a.set(2)
+        with self.instrument.a.set_to(freeze=False):
+            assert self.instrument.a() == 2
+            self.instrument.a(3)
+            assert self.instrument.a() == 3
+        assert self.instrument.a() == 2
+
+    def test_context_with_no_value_and_freeze(self):
+        self.instrument.a.set(2)
+        with self.instrument.a.set_to(freeze=True):
+            assert self.instrument.a() == 2
+            assert not self.instrument.a.settable
+            with self.assertRaises(TypeError):
+                self.instrument.a.set(5)
+        assert self.instrument.a() == 2
+        assert self.instrument.a.settable
