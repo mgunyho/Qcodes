@@ -174,6 +174,28 @@ class TestSetContextManager(TestCase):
             pass
         assert self._cp_counter == 3
 
+    def test_freeze(self):
+        self.instrument.a.set(2)
+
+        with self.instrument.a.set_to(3, freeze=True):
+            assert self.instrument.a() == 3
+            assert not self.instrument.a.settable
+            with self.assertRaises(TypeError):
+                self.instrument.a.set(5)
+
+        assert self.instrument.a.settable
+        assert self.instrument.a() == 2
+
+    def test_no_freeze(self):
+        self.instrument.a.set(2)
+        with self.instrument.a.set_to(3, freeze=False):
+            assert self.instrument.a.settable
+            assert self.instrument.a() == 3
+            self.instrument.a.set(5)
+            assert self.instrument.a() == 5
+        assert self.instrument.a.settable
+        assert self.instrument.a() == 2
+
     def test_context_initialized_with_current_value(self):
         """
         Test that if the context is entered with the current value of the
@@ -181,8 +203,9 @@ class TestSetContextManager(TestCase):
         """
         self.instrument.a.set(2)
 
-        with self.instrument.a.set_to(2):
+        with self.instrument.a.set_to(2, freeze=False):
             assert self.instrument.a.get() == 2
             self.instrument.a.set(3)
+            assert self.instrument.a() == 3
 
         assert self.instrument.a.get() == 2
