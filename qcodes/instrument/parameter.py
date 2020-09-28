@@ -876,6 +876,17 @@ class _BaseParameter(Metadatable):
             >>> with p.set_to(3, freeze=False):
             ...     p.set(5)  # now this works
             >>> print(f"value after second block: {p.get()}")  # still prints 2
+
+            Giving no value is the same as calling ``set_to`` with the current
+            value of the parameter:
+
+            >>> with p.set_to():
+            ...     print(f"value of p is still {p.get()}")  # still 2
+
+            This can be used, for example, to ensure that a parameter is not
+            changed during a complex experiment, or to restore the current
+            value of a parameter after a measurement within the context block
+            (with ``freeze=False``).
         """
         context_manager = _SetParamContext(self, *value, freeze=freeze)
         return context_manager
