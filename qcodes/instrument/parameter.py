@@ -125,18 +125,21 @@ class _SetParamContext:
     >>> assert abs(dac.voltage() - v) <= tolerance
 
     """
-    def __init__(self, parameter: "_BaseParameter", value: ParamDataType,
+    def __init__(self, parameter: "_BaseParameter", *value: ParamDataType,
                  freeze: bool = True):
 
         self._parameter = parameter
+        # ``value`` is a tuple, it should have either 0 or 1 elements
+        if len(value) > 1:
+            raise ValueError("Trying to set more than one value")
         self._value = value
 
         self._original_value = self._parameter.cache()
         self._freeze = freeze
 
     def __enter__(self) -> None:
-        if self._parameter.cache() != self._value:
-            self._parameter.set(self._value)
+        if self._value and self._parameter.cache() != self._value[0]:
+            self._parameter.set(self._value[0])
 
         if self._freeze:
             self._parameter_was_settable = self._parameter.settable
@@ -854,7 +857,7 @@ class _BaseParameter(Metadatable):
         else:
             return None
 
-    def set_to(self, value: ParamDataType,
+    def set_to(self, *value: ParamDataType,
                freeze: bool = True) -> _SetParamContext:
         """
         Use a context manager to temporarily set a parameter to a value. By
@@ -874,7 +877,7 @@ class _BaseParameter(Metadatable):
             ...     p.set(5)  # now this works
             >>> print(f"value after second block: {p.get()}")  # still prints 2
         """
-        context_manager = _SetParamContext(self, value, freeze=freeze)
+        context_manager = _SetParamContext(self, *value, freeze=freeze)
         return context_manager
 
     @property
